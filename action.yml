@@ -1,0 +1,77 @@
+name: 'OpenHands PR Review Action'
+description: 'Uses OpenHands AI to review a GitHub Pull Request by wrapping the generic OpenHands action.'
+author: 'Zainan Victor Zhou <zzn+openhands-action@zzn.im>'
+branding:
+  icon: 'message-square'
+  color: 'blue'
+
+inputs:
+  review_bot_github_token:
+    description: 'GitHub token with permissions to read repo content and write PR reviews/comments. Typically ${{ secrets.GITHUB_TOKEN }} or a PAT.'
+    required: true
+  llm_api_key:
+    description: 'API key for the LLM service (e.g., Anthropic API key). Typically ${{ secrets.LLM_API_KEY }}'
+    required: true
+  llm_model:
+    description: 'The LLM model to use for the review'
+    required: false
+    default: 'anthropic/claude-3-haiku-20240307'
+  openhands_image:
+    description: 'Docker image for the OpenHands AI agent (passed to underlying action)'
+    required: false
+    default: 'docker.all-hands.dev/all-hands-ai/openhands:0.32'
+  runtime_image:
+    description: 'Docker image for the sandbox runtime environment (passed to underlying action)'
+    required: false
+    default: 'docker.all-hands.dev/all-hands-ai/runtime:0.32-nikolaik'
+  log_all_events:
+    description: 'Enable detailed logging of all events during task execution'
+    required: false
+    default: 'true'
+  review_prompt:
+    description: 'The specific prompt instructing OpenHands how to review the PR. GitHub context like repository and PR number are passed via additional_env.'
+    required: false
+    # Note: This prompt will be executed by the underlying openhands-action.
+    # It assumes GITHUB_TOKEN will be made available in the environment by that action.
+    default: |
+      Run in shell `export GITHUB_TOKEN=${{ inputs.review_bot_github_token }}``
+      You are a coding expert focused on GitHub pull request reviews.
+      Your task is to review the pull request number defined in the GITHUB_PR_NUMBER environment variable, within the repository defined in the GITHUB_REPOSITORY environment variable.
+      The GITHUB_TOKEN environment variable is already set for you with the necessary permissions.
+      Please perform the following:
+      1. Analyze the code changes in the PR.
+      2. Identify potential issues such as bugs, style inconsistencies, security vulnerabilities, or performance concerns.
+      3. Suggest improvements or fixes where necessary.
+      4. Post an overall summary comment on the PR.
+      5. If specific code lines require feedback, add line-level comments.
+      6. If the PR looks good and requires no changes, approve it.
+      Use the available GITHUB_TOKEN and GitHub REST API calls to post comments and approvals directly to the pull request.
+  cli_args:
+    description: 'Additional CLI arguments to pass to the OpenHands agent (passed to underlying action)'
+    required: false
+    default: ''
+
+runs:
+  using: "composite"
+  steps:
+    - name: Run OpenHands PR Review via Wrapper
+      uses: xinbenlv/openhands-action@v1.0.1-rc3
+      with:
+        # Pass inputs from this wrapper action to the underlying action
+        prompt: ${{ inputs.review_prompt }}
+        llm_model: ${{ inputs.llm_model }}
+        llm_api_key: ${{ inputs.llm_api_key }}
+        log_all_events: ${{ inputs.log_all_events }}
+        runtime_image: ${{ inputs.runtime_image }}
+        openhands_image: ${{ inputs.openhands_image }}
+        cli_args: ${{ inputs.cli_args }}
+        # Pass necessary GitHub context via additional_env
+        additional_env: |
+          {
+            "GITHUB_REPOSITORY": "${{ github.repository }}",
+            "GITHUB_PR_NUMBER": "${{ github.event.pull_request.number }}"
+          }
+
+# Note: This action assumes Docker is available on the runner,
+# and the runner has permissions to run Docker containers and access /var/run/docker.sock.
+# The calling workflow needs checkout step if repo files are needed by the review prompt/process. 
