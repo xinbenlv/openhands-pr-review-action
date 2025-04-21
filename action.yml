@@ -7,10 +7,10 @@ branding:
 
 inputs:
   review_bot_github_token:
-    description: 'GitHub token with permissions to read repo content and write PR reviews/comments. Typically ${{ secrets.GITHUB_TOKEN }} or a PAT.'
+    description: 'GitHub token with permissions to read repo content and write PR reviews/comments. Typically \$\{\{ secrets.GITHUB_TOKEN \}\} or a PAT.'
     required: true
   llm_api_key:
-    description: 'API key for the LLM service (e.g., Anthropic API key). Typically ${{ secrets.LLM_API_KEY }}'
+    description: 'API key for the LLM service (e.g., Anthropic API key). Typically \$\{\{ secrets.LLM_API_KEY \}\}'
     required: true
   llm_model:
     description: 'The LLM model to use for the review'
