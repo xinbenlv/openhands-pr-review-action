@@ -65,6 +65,7 @@ jobs:
 *   You **must** create repository secrets named `REVIEW_BOT_GITHUB_TOKEN` and `LLM_API_KEY`.
 *   The `REVIEW_BOT_GITHUB_TOKEN` needs `pull-requests: write` permission to post reviews and comments. Using the default `${{ secrets.GITHUB_TOKEN }}` might not be sufficient, especially for comments/reviews made by the action itself. A PAT or a token from a dedicated GitHub App is recommended.
 *   The runner environment must have Docker installed and running, and the action needs permission to access the Docker socket (`/var/run/docker.sock`). This is standard for GitHub-hosted runners.
+*   Please only allow trusted input to your prompt and codebase. Untrusted input may lead to exposure of sensitive information.
 
 ## Inputs
 
